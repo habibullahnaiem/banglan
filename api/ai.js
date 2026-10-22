@@ -5,7 +5,7 @@
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false });
   var keys = [];
-  for (var n = 1; n <= 5; n++) {
+  for (var n = 1; n <= 10; n++) {
     var kv = n === 1 ? process.env.GEMINI_API_KEY : process.env["GEMINI_API_KEY_" + n];
     if (kv) keys.push(kv);
   }
