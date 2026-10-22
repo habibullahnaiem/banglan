@@ -8,8 +8,8 @@
 //      UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN (KV)
 var crypto = require("crypto");
 
-var KV_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || "";
-var KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || "";
+var KV_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.STORAGE_UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || process.env.STORAGE_KV_REST_API_URL || process.env.STORAGE_REDIS_REST_URL || "";
+var KV_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.STORAGE_UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || process.env.STORAGE_KV_REST_API_TOKEN || process.env.STORAGE_REDIS_REST_TOKEN || "";
 
 async function kvGet(key) {
   if (!KV_URL || !KV_TOKEN) return undefined; // KV নেই → stateless
