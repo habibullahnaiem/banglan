@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>বাংলান — AI ডেমো</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Tiro Bangla', serif; background: #faf6ec; color: #1d2b23; padding: 20px 14px 48px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #0c4a32, #06301f); color: #fff; border-radius: 20px; padding: 26px 24px; position: relative; overflow: hidden; }
+  header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: linear-gradient(90deg, #006a4e 75%, #d21034 75%); }
+  h1 { font-family: 'Noto Serif Bengali', serif; font-size: 30px; font-weight: 700; }
+  h1 .accent { color: #f2b53a; }
+  .badge { display: inline-block; background: #d21034; color: #fff; font-size: 13px; padding: 3px 12px; border-radius: 999px; margin-top: 10px; }
+  header p { margin-top: 10px; opacity: .92; line-height: 1.65; font-size: 16px; }
+  .note { background: #fff8e1; border: 1px solid #e8d48a; border-radius: 14px; padding: 14px 16px; margin-top: 16px; line-height: 1.7; font-size: 15px; }
+  .card { background: #fffdf8; border: 1px solid #e7dfc9; border-radius: 18px; padding: 20px; margin-top: 16px; box-shadow: 0 2px 10px rgba(60,50,10,.05); }
+  label { font-family: 'Noto Serif Bengali', serif; font-weight: 700; font-size: 18px; display: block; margin-bottom: 10px; }
+  textarea { width: 100%; min-height: 130px; font-family: inherit; font-size: 18px; line-height: 1.8; padding: 14px; border: 1.5px solid #cfc7a8; border-radius: 12px; background: #fff; resize: vertical; }
+  textarea:focus { outline: 2px solid #006a4e; border-color: transparent; }
+  button { font-family: inherit; font-size: 18px; background: #d21034; color: #fff; border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; margin-top: 14px; width: 100%; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .status { margin-top: 12px; font-size: 15px; color: #5a5340; min-height: 22px; }
+  h2 { font-family: 'Noto Serif Bengali', serif; font-size: 20px; margin-bottom: 10px; color: #0a4d33; }
+  .corrected { font-size: 18px; line-height: 1.9; background: #eef7f1; border: 1px solid #bfe0cd; border-radius: 12px; padding: 14px 16px; white-space: pre-wrap; }
+  .issue { border: 1px solid #ecd9a0; background: #fffdf4; border-radius: 12px; padding: 12px 14px; margin-top: 10px; line-height: 1.7; font-size: 16px; }
+  .issue .w { color: #b00020; text-decoration: line-through; font-weight: 700; }
+  .issue .r { color: #006a4e; font-weight: 700; }
+  .issue .why { display: block; color: #5a5340; font-size: 15px; margin-top: 2px; }
+  .raw { white-space: pre-wrap; font-size: 16px; line-height: 1.8; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
+  .cols .card { margin-top: 0; }
+  .cols ul { padding-left: 20px; line-height: 1.9; font-size: 15.5px; }
+  .foot { text-align: center; margin-top: 22px; color: #8a8163; font-size: 14px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>বাংলান <span class="accent">AI</span> ডেমো</h1>
+    <span class="badge">পরীক্ষামূলক — আসল সাইটে এখনো বসেনি</span>
+    <p>এই ডেমোতে দেখা যাবে, বাংলানের নিয়ম-ইঞ্জিনের পাশাপাশি একটা AI স্তর থাকলে প্রসঙ্গ বুঝে কী ধরনের অতিরিক্ত সাহায্য পাওয়া যায়।</p>
+  </header>
+
+  <div class="note">
+    ⚠️ <strong>সৎ ঘোষণা:</strong> এই ডেমো একটা ফ্রি AI মডেল দিয়ে চলছে — কোনো API key লাগেনি, খরচ শূন্য। তবে ফ্রি মডেল মাঝে মাঝে ভুলও বলতে পারে। আসল সাইটে বসানোর সময় পরিকল্পনা: যাচাইকৃত নিয়ম-ইঞ্জিনই চূড়ান্ত থাকবে, AI-র মতামত আলাদা <strong>"AI পরামর্শ"</strong> লেবেলে দেখানো হবে।
+  </div>
+
+  <div class="card">
+    <label for="inp">তোমার লেখা</label>
+    <textarea id="inp">আমার সুনার বাংলা আমি তোমায় ভালোবাসি। সে গতকাল বাজারে গিয়ে অনেক গুলো বই কিনেছে। আমি কালকে ঢাকা যাবো এবং বন্ধুর সাথে দেখা করবো।</textarea>
+    <button id="btn">🤖 AI দিয়ে যাচাই করুন</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card hidden" id="outCard">
+    <h2>✅ AI-এর শুদ্ধ রূপ</h2>
+    <div class="corrected" id="corrected"></div>
+    <h2 style="margin-top:18px;">🔍 যা যা বদলেছে</h2>
+    <div id="issues"></div>
+  </div>
+
+  <div class="cols" style="margin-top:16px;">
+    <div class="card">
+      <h2>⚙️ নিয়ম-ইঞ্জিন (এখনকার বাংলান)</h2>
+      <ul>
+        <li>অভিধান-ভিত্তিক বানান যাচাই (৬৪,৩৯৩ ভুক্তি)</li>
+        <li>৮৮টি যাচাইকৃত ব্যাকরণ নিয়ম</li>
+        <li>বিরাম-চিহ্ন ও সময়-লেখার নিয়ম</li>
+        <li>প্রতিটি নিয়মে বাংলা একাডেমির সূত্র</li>
+        <li>দ্রুত, অফলাইনেও চলে, কখনো আন্দাজ করে না</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>🤖 AI স্তর (এই ডেমো)</h2>
+      <ul>
+        <li>বাক্যের অর্থ বুঝে শব্দ-পছন্দ (সুনার → সোনার)</li>
+        <li>প্রসঙ্গ-নির্ভর ব্যাকরণের ভুল ধরা</li>
+        <li>সহজ ভাষায় ব্যাখ্যা দেওয়া</li>
+        <li>কিন্তু: মাঝে মাঝে ভুল বলতে পারে — তাই "পরামর্শ" লেবেল</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="foot">বাংলান — বদলান, বাংলা নির্ভুল বানান। · AI ডেমো পেজ</p>
+</div>
+
+<script>
+var btn = document.getElementById('btn');
+var statusEl = document.getElementById('status');
+var outCard = document.getElementById('outCard');
+var correctedEl = document.getElementById('corrected');
+var issuesEl = document.getElementById('issues');
+
+btn.addEventListener('click', function () {
+  var text = document.getElementById('inp').value.trim();
+  if (!text) { statusEl.textContent = 'আগে কিছু লেখা দাও।'; return; }
+  btn.disabled = true;
+  outCard.classList.add('hidden');
+  statusEl.textContent = 'AI ভাবছে… ফ্রি মডেলে একটু সময় লাগতে পারে (১০–৩০ সেকেন্ড)।';
+  var prompt = 'তুমি বাংলা বানান ও ব্যাকরণের বিশেষজ্ঞ। নিচের বাংলা লেখাটির সব বানান ও ব্যাকরণের ভুল ঠিক করো। প্রসঙ্গ অনুযায়ী সঠিক শব্দ বেছে নাও (যেমন গানের লাইনে "সুনার" লেখা থাকলে তা হবে "সোনার")। উত্তরে শুধু নিচের ফরম্যাটে লেখো, অন্য কিছু লিখবে না:\n\nশুদ্ধ লেখা:\n<পুরো শুদ্ধ লেখাটা এখানে>\n\nপরিবর্তনসমূহ:\n- ভুল শব্দ → শুদ্ধ শব্দ : সংক্ষেপে কারণ\n(প্রতিটি পরিবর্তন এক লাইনে; কোনো ভুল না থাকলে লিখবে "কোনো ভুল পাওয়া যায়নি")\n\nলেখা:\n' + text;
+  fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt))
+    .then(function (r) { if (!r.ok) throw new Error('bad'); return r.text(); })
+    .then(function (t) {
+      btn.disabled = false;
+      statusEl.textContent = '';
+      render(t);
+    })
+    .catch(function () {
+      btn.disabled = false;
+      statusEl.textContent = '❌ ফ্রি AI সার্ভার এখন সাড়া দিচ্ছে না। একটু পরে আবার চেষ্টা করো।';
+    });
+});
+
+function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function render(t) {
+  var corr = '', issuesPart = '';
+  var m = t.match(/শুদ্ধ লেখা:\s*([\s\S]*?)(?:পরিবর্তনসমূহ:|$)/);
+  if (m) corr = m[1].trim();
+  var m2 = t.match(/পরিবর্তনসমূহ:\s*([\s\S]*)$/);
+  if (m2) issuesPart = m2[1].trim();
+  outCard.classList.remove('hidden');
+  if (!corr && !issuesPart) {
+    correctedEl.innerHTML = '<span class="raw">' + esc(t) + '</span>';
+    issuesEl.innerHTML = '';
+    return;
+  }
+  correctedEl.textContent = corr || '(শুদ্ধ রূপ পাওয়া যায়নি)';
+  var lines = issuesPart.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  if (!lines.length || /কোনো ভুল পাওয়া যায়নি/.test(issuesPart)) {
+    issuesEl.innerHTML = '<div class="issue">কোনো ভুল পাওয়া যায়নি।</div>';
+    return;
+  }
+  issuesEl.innerHTML = lines.map(function (ln) {
+    var clean = ln.replace(/^[-•*]\s*/, '');
+    var mm = clean.match(/^(.*?)\s*→\s*(.*?)\s*[:：]\s*(.*)$/);
+    if (mm) return '<div class="issue"><span class="w">' + esc(mm[1]) + '</span> → <span class="r">' + esc(mm[2]) + '</span><span class="why">' + esc(mm[3]) + '</span></div>';
+    return '<div class="issue">' + esc(clean) + '</div>';
+  }).join('');
+}
+</script>
+</body>
+</html>
