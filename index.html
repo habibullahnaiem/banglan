@@ -2101,7 +2101,7 @@
         panel.id = "premiumPanel";
         panel.setAttribute("style", "display:none;margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
         panel.innerHTML = "<strong>✨ বাংলান প্রিমিয়াম</strong><div style=\"margin-top:6px;\">প্রিমিয়ামে যা পাবেন: <b>পুরো লেখা AI রিভিউ</b> (এক ক্লিকে পুরো লেখার AI প্রুফরিডিং) + <b>বেশি AI কল</b> (অনিশ্চিত জায়গায় AI পরামর্শের সীমা অনেক বেশি)।</div>" +
-          "<div style=\"margin-top:8px;font-size:1.05em;\"><b>দাম: ৳৩০-তে ৩০ দিন</b> <span style=\"opacity:.75\">(নিয়মিত ৳৫০ — এখন ৪০% ছাড়)</span></div>" +
+          "<div style=\"margin-top:8px;font-size:1.05em;\"><b>দাম: ৳৩০-তে ৩০ দিন</b> <span style=\"opacity:.75\">(নিয়মিত ৳৫০ — এখন ৪০% ছাড়)</span><br><b>৪ মাসের প্ল্যান: মাত্র ৳৯৯</b> <span style=\"opacity:.75\">(সবচেয়ে সাশ্রয়ী)</span></div>" +
           "<div style=\"margin-top:8px;\">অ্যাক্টিভেশন কোড থাকলে নিচে বসান — কোড ৩০ দিনের জন্য প্রিমিয়াম সক্রিয় করবে।</div>" +
           "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;\"><input id=\"premiumCode\" type=\"text\" placeholder=\"BNLP-XXXXXX-XXXXXX\" style=\"flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1.5px solid #d9a400;background:transparent;color:inherit;\"><button type=\"button\" id=\"premiumActivate\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid #d9a400;background:rgba(217,164,0,.16);font-weight:700;cursor:pointer;\">সক্রিয় করুন</button></div>" +
           "<div id=\"premiumStatus\" style=\"margin-top:8px;\"></div>";
@@ -2129,7 +2129,7 @@
             .then(function (data) {
               if (data && data.ok && data.token) {
                 try { localStorage.setItem("banglan_premium", data.token); } catch (e) {}
-                st.textContent = "✅ প্রিমিয়াম সক্রিয় হয়েছে — ৩০ দিনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।";
+                st.textContent = "✅ প্রিমিয়াম সক্রিয় হয়েছে — " + String(data.days || 30).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[+d]; }) + " দিনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।";
                 refreshPrem();
               } else if (data && data.configured === false) {
                 st.textContent = "প্রিমিয়াম ব্যবস্থা এখনো চালু হয়নি — শীঘ্রই আসছে।";
