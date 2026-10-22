@@ -1309,8 +1309,16 @@ footer .app-logo-img{width:2.75rem;height:2.75rem;border-radius:.9rem}
             .then(function (data) {
               if (data && data.ok && data.token) {
                 try { localStorage.setItem("banglan_premium", data.token); } catch (e) {}
-                st.textContent = data.lifetime ? "✅ সুপার প্রিমিয়াম সক্রিয় হয়েছে — আজীবনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।" : "✅ প্রিমিয়াম সক্রিয় হয়েছে — " + String(data.days || 30).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[+d]; }) + " দিনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।";
+                if (data.returning) {
+                  var left = Math.max(1, Math.ceil((data.exp * 1000 - Date.now()) / 864e5));
+                  var leftBn = String(left).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[+d]; });
+                  st.textContent = data.lifetime ? "✅ সুপার প্রিমিয়াম আগেই সক্রিয় আছে — আজীবনের জন্য।" : "✅ এই কোড আগেই সক্রিয় করা ছিল — মেয়াদ প্রথম অ্যাক্টিভেশন থেকেই চলছে, বাকি " + leftBn + " দিন।";
+                } else {
+                  st.textContent = data.lifetime ? "✅ সুপার প্রিমিয়াম সক্রিয় হয়েছে — আজীবনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।" : "✅ প্রিমিয়াম সক্রিয় হয়েছে — " + String(data.days || 30).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[+d]; }) + " দিনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।";
+                }
                 refreshPrem();
+              } else if (data && data.error === "code_expired") {
+                st.textContent = "⌛ এই কোডের মেয়াদ শেষ হয়ে গেছে — কোডটি আর ব্যবহার করা যাবে না।";
               } else if (data && data.configured === false) {
                 st.textContent = "প্রিমিয়াম ব্যবস্থা এখনো চালু হয়নি — শীঘ্রই আসছে।";
               } else {
