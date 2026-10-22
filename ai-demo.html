@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>বাংলান — AI ডেমো</title>
+<title>বাংলান — AI ডেমো (দুই স্তর)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Noto+Serif+Bengali:wght@600;700&display=swap" rel="stylesheet">
 <style>
@@ -19,70 +19,88 @@
   .note { background: #fff8e1; border: 1px solid #e8d48a; border-radius: 14px; padding: 14px 16px; margin-top: 16px; line-height: 1.7; font-size: 15px; }
   .card { background: #fffdf8; border: 1px solid #e7dfc9; border-radius: 18px; padding: 20px; margin-top: 16px; box-shadow: 0 2px 10px rgba(60,50,10,.05); }
   label { font-family: 'Noto Serif Bengali', serif; font-weight: 700; font-size: 18px; display: block; margin-bottom: 10px; }
-  textarea { width: 100%; min-height: 130px; font-family: inherit; font-size: 18px; line-height: 1.8; padding: 14px; border: 1.5px solid #cfc7a8; border-radius: 12px; background: #fff; resize: vertical; }
+  textarea { width: 100%; min-height: 120px; font-family: inherit; font-size: 18px; line-height: 1.8; padding: 14px; border: 1.5px solid #cfc7a8; border-radius: 12px; background: #fff; resize: vertical; }
   textarea:focus { outline: 2px solid #006a4e; border-color: transparent; }
-  button { font-family: inherit; font-size: 18px; background: #d21034; color: #fff; border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; margin-top: 14px; width: 100%; }
-  button:disabled { opacity: .55; cursor: wait; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip { font-family: inherit; font-size: 14.5px; background: #eef7f1; color: #0a4d33; border: 1px solid #bfe0cd; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+  .chip:hover { background: #dff0e6; }
+  button.main { font-family: inherit; font-size: 18px; background: #006a4e; color: #fff; border: none; border-radius: 12px; padding: 13px 26px; cursor: pointer; margin-top: 14px; width: 100%; }
+  button.main:disabled { opacity: .55; cursor: wait; }
   .status { margin-top: 12px; font-size: 15px; color: #5a5340; min-height: 22px; }
   h2 { font-family: 'Noto Serif Bengali', serif; font-size: 20px; margin-bottom: 10px; color: #0a4d33; }
+  .finding { border-radius: 12px; padding: 11px 14px; margin-top: 9px; line-height: 1.7; font-size: 16px; }
+  .f-err { border: 1px solid #f0b6bd; background: #fdf0f1; }
+  .f-unc { border: 1px solid #ecd9a0; background: #fffdf4; }
+  .w { color: #b00020; font-weight: 700; }
+  .r { color: #006a4e; font-weight: 700; }
+  .why { display: block; color: #5a5340; font-size: 14.5px; }
+  .decision { border-radius: 14px; padding: 15px 17px; margin-top: 16px; line-height: 1.7; font-size: 16.5px; }
+  .d-ok { background: #eef7f1; border: 1.5px solid #006a4e; }
+  .d-ai { background: #fff4d6; border: 1.5px solid #d9a400; }
   .corrected { font-size: 18px; line-height: 1.9; background: #eef7f1; border: 1px solid #bfe0cd; border-radius: 12px; padding: 14px 16px; white-space: pre-wrap; }
   .issue { border: 1px solid #ecd9a0; background: #fffdf4; border-radius: 12px; padding: 12px 14px; margin-top: 10px; line-height: 1.7; font-size: 16px; }
-  .issue .w { color: #b00020; text-decoration: line-through; font-weight: 700; }
-  .issue .r { color: #006a4e; font-weight: 700; }
-  .issue .why { display: block; color: #5a5340; font-size: 15px; margin-top: 2px; }
-  .raw { white-space: pre-wrap; font-size: 16px; line-height: 1.8; }
   .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   @media (max-width: 560px) { .cols { grid-template-columns: 1fr; } }
   .cols .card { margin-top: 0; }
   .cols ul { padding-left: 20px; line-height: 1.9; font-size: 15.5px; }
   .foot { text-align: center; margin-top: 22px; color: #8a8163; font-size: 14px; }
   .hidden { display: none; }
+  .summary { font-size: 15.5px; color: #5a5340; margin-bottom: 6px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>বাংলান <span class="accent">AI</span> ডেমো</h1>
+    <h1>বাংলান <span class="accent">AI</span> ডেমো — দুই স্তর</h1>
     <span class="badge">পরীক্ষামূলক — আসল সাইটে এখনো বসেনি</span>
-    <p>এই ডেমোতে দেখা যাবে, বাংলানের নিয়ম-ইঞ্জিনের পাশাপাশি একটা AI স্তর থাকলে প্রসঙ্গ বুঝে কী ধরনের অতিরিক্ত সাহায্য পাওয়া যায়।</p>
+    <p>নিয়মটা সহজ: <strong>নিয়ম-ইঞ্জিন আগে</strong>। ইঞ্জিন যেখানে নিশ্চিত, সেখানেই শেষ — AI ডাকাই হয় না। ইঞ্জিন <strong>অনিশ্চিত</strong> হলেই শুধু AI-কে ডাকা হয়। ফলে ফ্রি কোটা বাঁচে, গতিও বাড়ে।</p>
   </header>
 
   <div class="note">
-    ⚠️ <strong>সৎ ঘোষণা:</strong> এই ডেমো একটা ফ্রি AI মডেল দিয়ে চলছে — কোনো API key লাগেনি, খরচ শূন্য। তবে ফ্রি মডেল মাঝে মাঝে ভুলও বলতে পারে। আসল সাইটে বসানোর সময় পরিকল্পনা: যাচাইকৃত নিয়ম-ইঞ্জিনই চূড়ান্ত থাকবে, AI-র মতামত আলাদা <strong>"AI পরামর্শ"</strong> লেবেলে দেখানো হবে।
+    ⚠️ <strong>সৎ ঘোষণা:</strong> এই ডেমোর "ইঞ্জিন" অংশটা একটা ছোট নমুনা-অভিধান দিয়ে চলে (আসল বাংলানের অভিধান ৬৪,৩৯৩ ভুক্তির — এখানে ধারণাটা দেখানোই উদ্দেশ্য)। AI অংশ সত্যিকারের ফ্রি মডেল — মাঝে মাঝে ধীর হয়, ভুলও বলতে পারে। আসল সাইটে বসানোর সময় AI আসবে Gemini ফ্রি টিয়ার থেকে, "AI পরামর্শ" লেবেলে।
   </div>
 
   <div class="card">
     <label for="inp">তোমার লেখা</label>
-    <textarea id="inp">আমার সুনার বাংলা আমি তোমায় ভালোবাসি। সে গতকাল বাজারে গিয়ে অনেক গুলো বই কিনেছে। আমি কালকে ঢাকা যাবো এবং বন্ধুর সাথে দেখা করবো।</textarea>
-    <button id="btn">🤖 AI দিয়ে যাচাই করুন</button>
+    <textarea id="inp">আমার সুনার বাংলা আমি তোমায় ভালোবাসি। সে গতকাল বাজারে গিয়ে অনেকগুলো বই কিনেছে।</textarea>
+    <div class="chips">
+      <button class="chip" data-preset="a">নমুনা ১ · ইঞ্জিনই নিশ্চিত</button>
+      <button class="chip" data-preset="b">নমুনা ২ · অজানা শব্দ (AI লাগবে)</button>
+      <button class="chip" data-preset="c">নমুনা ৩ · প্রসঙ্গের প্রশ্ন (AI লাগবে)</button>
+    </div>
+    <button class="main" id="btn">যাচাই করুন</button>
     <div class="status" id="status"></div>
   </div>
 
-  <div class="card hidden" id="outCard">
-    <h2>✅ AI-এর শুদ্ধ রূপ</h2>
+  <div class="card hidden" id="engineCard">
+    <h2>⚙️ ধাপ ১ · নিয়ম-ইঞ্জিনের ফল (সঙ্গে সঙ্গে)</h2>
+    <div class="summary" id="engineSummary"></div>
+    <div id="engineFindings"></div>
+  </div>
+
+  <div class="decision hidden" id="decisionBox"></div>
+
+  <div class="card hidden" id="aiCard">
+    <h2>🤖 ধাপ ২ · AI পরামর্শ (শুধু অনিশ্চিত জায়গায়)</h2>
     <div class="corrected" id="corrected"></div>
-    <h2 style="margin-top:18px;">🔍 যা যা বদলেছে</h2>
     <div id="issues"></div>
   </div>
 
   <div class="cols" style="margin-top:16px;">
     <div class="card">
-      <h2>⚙️ নিয়ম-ইঞ্জিন (এখনকার বাংলান)</h2>
+      <h2>⚙️ ইঞ্জিন কখন নিশ্চিত</h2>
       <ul>
-        <li>অভিধান-ভিত্তিক বানান যাচাই (৬৪,৩৯৩ ভুক্তি)</li>
-        <li>৮৮টি যাচাইকৃত ব্যাকরণ নিয়ম</li>
-        <li>বিরাম-চিহ্ন ও সময়-লেখার নিয়ম</li>
-        <li>প্রতিটি নিয়মে বাংলা একাডেমির সূত্র</li>
-        <li>দ্রুত, অফলাইনেও চলে, কখনো আন্দাজ করে না</li>
+        <li>শব্দ অভিধানে আছে → শুদ্ধ</li>
+        <li>জানা-ভুলের জোড়া আছে → নিশ্চিত ভুল + ঠিক উত্তর</li>
+        <li>এই দুটোতেই সব মিটলে AI ডাকা হয় না — <strong>AI কল: ০</strong></li>
       </ul>
     </div>
     <div class="card">
-      <h2>🤖 AI স্তর (এই ডেমো)</h2>
+      <h2>🤖 AI কখন ডাকা হয়</h2>
       <ul>
-        <li>বাক্যের অর্থ বুঝে শব্দ-পছন্দ (সুনার → সোনার)</li>
-        <li>প্রসঙ্গ-নির্ভর ব্যাকরণের ভুল ধরা</li>
-        <li>সহজ ভাষায় ব্যাখ্যা দেওয়া</li>
-        <li>কিন্তু: মাঝে মাঝে ভুল বলতে পারে — তাই "পরামর্শ" লেবেল</li>
+        <li>শব্দ অভিধানেও নেই, জোড়াও নেই → ইঞ্জিন অনিশ্চিত</li>
+        <li>বানান ঠিক কিন্তু প্রসঙ্গ-সন্দেহ (যেমন কি / কী)</li>
+        <li>তখন শুধু ওই বাক্যটা পাঠিয়ে AI-র মতামত নেওয়া হয়</li>
       </ul>
     </div>
   </div>
@@ -91,36 +109,108 @@
 </div>
 
 <script>
+/* ===== ডেমোর মিনি নিয়ম-ইঞ্জিন (নমুনা ডেটা) ===== */
+var MINI_DICT = {};
+('আমার তোমার তার তাঁর আমি তুমি সে তিনি আমরা তারা এবং কিন্তু আজ কাল গতকাল কালকে আজকে সকালে বিকেলে রাতে বাংলা ইংরেজি গান ছবি মন বই খাতা কলম স্কুল স্কুলে কলেজ বাড়ি বাড়িতে বাজার বাজারে ঢাকা ঢাকায় বন্ধু বন্ধুর সাথে দেখা অনেক অনেকগুলো গত হয়ে গিয়ে এসে পড়ে লেখে ভালো খারাপ বড় ছোট নতুন সবার সবাই একজন মানুষ ভালোবাসি তোমায় কিনেছে যাবে যাই খায় খেয়ে করে করা হয় হয়েছে গেল যাব করে করি আজ স্কুলে আঁকা').split(' ').forEach(function (w) { MINI_DICT[w] = 1; });
+var MINI_FIX = { 'সুনার': 'সোনার', 'করবো': 'করব', 'যাবো': 'যাব', 'আকাঙ্খা': 'আকাঙ্ক্ষা', 'ইতিপুর্বে': 'ইতিপূর্বে', 'মুহুর্ত': 'মুহূর্ত' };
+var WATCHLIST = { 'কি': 1, 'কী': 1 };
+
+var PRESETS = {
+  a: 'আমার সুনার বাংলা আমি তোমায় ভালোবাসি। সে গতকাল বাজারে গিয়ে অনেকগুলো বই কিনেছে।',
+  b: 'তিনি একজন খ্যাতনামা চিত্রশিল্পী, তাঁর আঁকা ছবি সবার মন কাড়ে।',
+  c: 'তুমি কি আজ স্কুলে যাবে?'
+};
+
+function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function tokenise(text) {
+  var raw = text.split(/[\s।॥,;:!?()"“”‘’]+/).filter(Boolean);
+  return raw.map(function (w) { return w.trim(); }).filter(Boolean);
+}
+
+function runEngine(text) {
+  var words = tokenise(text);
+  var certain = [], uncertain = [], watch = [];
+  words.forEach(function (w) {
+    if (MINI_FIX[w]) certain.push({ word: w, right: MINI_FIX[w] });
+    else if (WATCHLIST[w]) watch.push({ word: w });
+    else if (!MINI_DICT[w]) uncertain.push({ word: w });
+  });
+  return { certain: certain, uncertain: uncertain, watch: watch, total: words.length };
+}
+
 var btn = document.getElementById('btn');
 var statusEl = document.getElementById('status');
-var outCard = document.getElementById('outCard');
+var engineCard = document.getElementById('engineCard');
+var engineSummary = document.getElementById('engineSummary');
+var engineFindings = document.getElementById('engineFindings');
+var decisionBox = document.getElementById('decisionBox');
+var aiCard = document.getElementById('aiCard');
 var correctedEl = document.getElementById('corrected');
 var issuesEl = document.getElementById('issues');
+
+document.querySelectorAll('.chip').forEach(function (ch) {
+  ch.addEventListener('click', function () {
+    document.getElementById('inp').value = PRESETS[ch.getAttribute('data-preset')];
+  });
+});
 
 btn.addEventListener('click', function () {
   var text = document.getElementById('inp').value.trim();
   if (!text) { statusEl.textContent = 'আগে কিছু লেখা দাও।'; return; }
+  aiCard.classList.add('hidden');
+  decisionBox.classList.add('hidden');
+  var res = runEngine(text);
+  engineCard.classList.remove('hidden');
+  engineSummary.textContent = 'মোট ' + res.total + 'টি শব্দ · নিশ্চিত ভুল ' + res.certain.length + 'টি · অনিশ্চিত ' + (res.uncertain.length + res.watch.length) + 'টি';
+  var html = '';
+  if (!res.certain.length && !res.uncertain.length && !res.watch.length) {
+    html = '<div class="finding f-unc">কোনো ভুল বা অনিশ্চয়তা পাইনি — সব শব্দ অভিধানে মিলেছে।</div>';
+  }
+  res.certain.forEach(function (f) {
+    html += '<div class="finding f-err"><span class="w">' + esc(f.word) + '</span> → <span class="r">' + esc(f.right) + '</span><span class="why">জানা-ভুলের তালিকা থেকে — ইঞ্জিন নিশ্চিত।</span></div>';
+  });
+  res.uncertain.forEach(function (f) {
+    html += '<div class="finding f-unc">❓ <strong>' + esc(f.word) + '</strong><span class="why">ডেমোর নমুনা-অভিধানে নেই, কোনো জানা-ভুলের জোড়াও নেই — ইঞ্জিন এখানে নিশ্চিত নয়।</span></div>';
+  });
+  res.watch.forEach(function (f) {
+    html += '<div class="finding f-unc">❓ <strong>' + esc(f.word) + '</strong><span class="why">বানান ঠিক, কিন্তু এই শব্দের সঠিক রূপ প্রসঙ্গের ওপর নির্ভর করে (কি / কী) — ইঞ্জিন একা সিদ্ধান্ত নিতে পারে না।</span></div>';
+  });
+  engineFindings.innerHTML = html;
+
+  var needAI = res.uncertain.length > 0 || res.watch.length > 0;
+  decisionBox.classList.remove('hidden');
+  if (!needAI) {
+    decisionBox.className = 'decision d-ok';
+    decisionBox.innerHTML = '✅ <strong>ইঞ্জিনই নিশ্চিত — AI ডাকার প্রয়োজন হয়নি।</strong> এই যাচাইয়ে AI কল: ০টা। কোটা বাঁচল, উত্তরও এল সঙ্গে সঙ্গে।';
+    statusEl.textContent = '';
+    return;
+  }
+  decisionBox.className = 'decision d-ai';
+  decisionBox.innerHTML = '🤔 <strong>ইঞ্জিন অনিশ্চিত — AI-কে ডাকা হচ্ছে…</strong> শুধু এই লেখাটার অনিশ্চিত অংশের জন্যই। ফ্রি মডেলে ১০–৩০ সেকেন্ড লাগতে পারে।';
+  callAI(text, res);
+});
+
+function callAI(text, res) {
   btn.disabled = true;
-  outCard.classList.add('hidden');
-  statusEl.textContent = 'AI ভাবছে… ফ্রি মডেলে একটু সময় লাগতে পারে (১০–৩০ সেকেন্ড)।';
-  var prompt = 'তুমি বাংলা বানান ও ব্যাকরণের বিশেষজ্ঞ। নিচের লেখাটির শুধু স্পষ্ট বানান ও ব্যাকরণের ভুল ঠিক করো। প্রসঙ্গ অনুযায়ী সঠিক শব্দ বেছে নাও (গানের লাইনে "সুনার" থাকলে হবে "সোনার")। গান/কবিতার প্রচলিত রূপ (যেমন "তোমায়") বদলাবে না। কোনো ভাবনা বা আলোচনা লিখবে না — শুধু এই ফরম্যাটে উত্তর দাও:\n\nশুদ্ধ লেখা:\n<শুদ্ধ লেখা>\n\nপরিবর্তনসমূহ:\n- ভুল → শুদ্ধ : সংক্ষিপ্ত কারণ\n(কোনো ভুল না থাকলে পরিবর্তনসমূহে লিখবে "কোনো ভুল পাওয়া যায়নি")\n\nলেখা:\n' + text;
+  var doubts = [];
+  res.uncertain.forEach(function (f) { doubts.push('"' + f.word + '" (অভিধানে পাইনি)'); });
+  res.watch.forEach(function (f) { doubts.push('"' + f.word + '" (প্রসঙ্গ-নির্ভর: কি/কী)'); });
+  var prompt = 'তুমি বাংলা বানান ও ব্যাকরণের বিশেষজ্ঞ। নিচের লেখাটা আগেই নিয়ম-ইঞ্জিন দিয়ে যাচাই হয়েছে। ইঞ্জিন এই জায়গাগুলোয় অনিশ্চিত: ' + doubts.join(', ') + '। শুধু এই অনিশ্চিত জায়গাগুলো প্রসঙ্গ দেখে বিচার করো — শব্দটা ঠিক থাকলে ঠিকই বলবে, ভুল থাকলে শুদ্ধ রূপ দেবে। গান/কবিতার প্রচলিত রূপ বদলাবে না। কোনো ভাবনা বা আলোচনা লিখবে না — শুধু এই ফরম্যাটে উত্তর দাও:\n\nশুদ্ধ লেখা:\n<পুরো লেখাটা, দরকারি সংশোধনসহ>\n\nপরিবর্তনসমূহ:\n- ভুল → শুদ্ধ : সংক্ষিপ্ত কারণ\n(কিছু বদলাতে না হলে লিখবে "কোনো ভুল পাওয়া যায়নি")\n\nলেখা:\n' + text;
   fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt) + '?model=openai')
     .then(function (r) { if (!r.ok) throw new Error('bad'); return r.text(); })
     .then(function (t) {
       btn.disabled = false;
-      statusEl.textContent = '';
-      render(t);
+      decisionBox.innerHTML = '🤖 <strong>AI পরামর্শ এসেছে</strong> (এই যাচাইয়ে AI কল: ১টা)। মনে রেখো — এটা পরামর্শ, যাচাইকৃত নিয়ম নয়।';
+      renderAI(t);
     })
     .catch(function () {
       btn.disabled = false;
-      statusEl.textContent = '❌ ফ্রি AI সার্ভার এখন সাড়া দিচ্ছে না। একটু পরে আবার চেষ্টা করো।';
+      decisionBox.innerHTML = '❌ ফ্রি AI সার্ভার এখন সাড়া দিচ্ছে না। ইঞ্জিনের ফল ওপরেই আছে — সাইটের মূল কাজ থামেনি। একটু পরে আবার চেষ্টা করো।';
     });
-});
+}
 
-function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-function render(t) {
-  /* ফ্রি মডেল মাঝে মাঝে আক্ষরিক \n আর বাড়তি ভাবনা পাঠায় — পরিষ্কার করে আসল অংশটুকু নেওয়া */
+function renderAI(t) {
   t = t.replace(/\\n/g, '\n').replace(/\\"/g, '"');
   var li = t.lastIndexOf('শুদ্ধ লেখা:');
   if (li > 0) t = t.slice(li);
@@ -132,16 +222,11 @@ function render(t) {
   issuesPart = issuesPart.split('\n').filter(function (ln) {
     return ln.indexOf('→') !== -1 || /কোনো ভুল পাওয়া যায়নি/.test(ln);
   }).join('\n');
-  outCard.classList.remove('hidden');
-  if (!corr && !issuesPart) {
-    correctedEl.innerHTML = '<span class="raw">' + esc(t) + '</span>';
-    issuesEl.innerHTML = '';
-    return;
-  }
-  correctedEl.textContent = corr || '(শুদ্ধ রূপ পাওয়া যায়নি)';
+  aiCard.classList.remove('hidden');
+  correctedEl.textContent = corr || t;
   var lines = issuesPart.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
   if (!lines.length || /কোনো ভুল পাওয়া যায়নি/.test(issuesPart)) {
-    issuesEl.innerHTML = '<div class="issue">কোনো ভুল পাওয়া যায়নি।</div>';
+    issuesEl.innerHTML = '<div class="issue">AI বলছে: অনিশ্চিত জায়গাগুলো ঠিকই আছে — কোনো পরিবর্তন লাগবে না।</div>';
     return;
   }
   issuesEl.innerHTML = lines.map(function (ln) {
