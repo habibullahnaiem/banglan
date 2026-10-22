@@ -8,7 +8,8 @@ module.exports = async function handler(req, res) {
   var hashes30 = (process.env.PREMIUM_CODE_HASHES || "").split(",").map(function (h) { return h.trim(); }).filter(Boolean);
   var hashes120 = (process.env.PREMIUM_CODE_HASHES_120 || "").split(",").map(function (h) { return h.trim(); }).filter(Boolean);
   var hashes365 = (process.env.PREMIUM_CODE_HASHES_365 || "").split(",").map(function (h) { return h.trim(); }).filter(Boolean);
-  if (!secret || (!hashes30.length && !hashes120.length && !hashes365.length)) return res.status(200).json({ ok: false, configured: false });
+  var hashesLife = (process.env.PREMIUM_CODE_HASHES_LIFETIME || "").split(",").map(function (h) { return h.trim(); }).filter(Boolean);
+  if (!secret || (!hashes30.length && !hashes120.length && !hashes365.length && !hashesLife.length)) return res.status(200).json({ ok: false, configured: false });
 
   var body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (e) { body = {}; } }
@@ -22,11 +23,12 @@ module.exports = async function handler(req, res) {
       try { return crypto.timingSafeEqual(Buffer.from(h), Buffer.from(digest)); } catch (e) { return false; }
     });
   }
-  var days = inList(hashes30) ? 30 : (inList(hashes120) ? 120 : (inList(hashes365) ? 365 : 0));
+  var lifetime = inList(hashesLife);
+  var days = lifetime ? 36500 : (inList(hashes30) ? 30 : (inList(hashes120) ? 120 : (inList(hashes365) ? 365 : 0)));
   if (!days) return res.status(200).json({ ok: false, error: "invalid_code" });
 
   var exp = Math.floor(Date.now() / 1000) + days * 24 * 3600;
   var payload = Buffer.from(JSON.stringify({ v: 1, exp: exp })).toString("base64url");
   var sig = crypto.createHmac("sha256", secret).update(payload).digest("hex");
-  return res.status(200).json({ ok: true, token: payload + "." + sig, exp: exp, days: days });
+  return res.status(200).json({ ok: true, token: payload + "." + sig, exp: exp, days: days, lifetime: lifetime });
 };
