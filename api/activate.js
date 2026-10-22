@@ -59,6 +59,11 @@ module.exports = async function handler(req, res) {
   }
   var lifetime = inList(hashesLife);
   var days = lifetime ? 36500 : (inList(hashes30) ? 30 : (inList(hashes120) ? 120 : (inList(hashes365) ? 365 : 0)));
+  if (!days) {
+    // অটো-পেমেন্টে বিক্রি হওয়া কোড: pay.js কেনার সময় হ্যাশ KV-তে নিবন্ধন করে
+    var minted = await kvGet("bnlp:minted:" + digest);
+    if (minted && typeof minted.days === "number") days = minted.days;
+  }
   if (!days) return res.status(200).json({ ok: false, error: "invalid_code" });
 
   function issue(exp, returning) {

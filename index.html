@@ -1291,6 +1291,9 @@ footer .app-logo-img{width:2.75rem;height:2.75rem;border-radius:.9rem}
           "<div style=\"margin-top:8px;font-size:1.05em;\">৩০ দিন: <s>৳৫০</s> <b>৳৩০</b> <span style=\"opacity:.75\">(৪০% ছাড়)</span><br>৪ মাস: <s>৳২০০</s> <b>৳৯৯</b> <span style=\"opacity:.75\">(৫০% ছাড়)</span><br>১ বছর: <s>৳৬০০</s> <b>৳১৯৯</b> <span style=\"opacity:.75\">(৬৭% ছাড় — সেরা অফার)</span></div>" +
           "<div style=\"margin-top:8px;\">🛒 <b>কিনতে:</b> বিকাশ / নগদ / রকেটে <b>01601599355</b> নম্বরে প্ল্যানের টাকা পাঠিয়ে TrxID-টি WhatsApp করুন — যাচাই শেষে অ্যাক্টিভেশন কোড পাঠিয়ে দেওয়া হবে।</div>" +
           "<div style=\"margin-top:10px;\"><a href=\"https://wa.me/8801601599355?text=%E0%A6%AC%E0%A6%BE%E0%A6%82%E0%A6%B2%E0%A6%BE%E0%A6%A8%20%E0%A6%AA%E0%A7%8D%E0%A6%B0%E0%A6%BF%E0%A6%AE%E0%A6%BF%E0%A6%AF%E0%A6%BC%E0%A6%BE%E0%A6%AE%20%E0%A6%95%E0%A6%BF%E0%A6%A8%E0%A6%A4%E0%A7%87%20%E0%A6%9F%E0%A6%BE%E0%A6%95%E0%A6%BE%20%E0%A6%AA%E0%A6%BE%E0%A6%A0%E0%A6%BF%E0%A6%AF%E0%A6%BC%E0%A7%87%E0%A6%9B%E0%A6%BF%E0%A5%A4%20%E0%A6%AA%E0%A7%8D%E0%A6%B2%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%A8%3A%20___%20%2C%20TrxID%3A%20___\" target=\"_blank\" rel=\"noopener noreferrer\" style=\"display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;background:#25D366;color:#fff;font-weight:700;text-decoration:none;\">💬 WhatsApp-এ TrxID পাঠান</a>" +
+          "<div style=\"margin-top:14px;padding-top:12px;border-top:1px dashed var(--border);\">⚡ <b>অটো-কিনুন (সবচেয়ে সহজ):</b> প্ল্যান বেছে অর্ডার করুন → <b>01601599355</b> নম্বরে টাকা পাঠান → TrxID লিখুন — যাচাই হলেই সাথে সাথে কোড পেয়ে যাবেন।</div>" +
+          "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;\"><select id=\"payPlan\" style=\"padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:inherit;\"><option value=\"30\">৩০ দিন — ৳৩০</option><option value=\"120\">৪ মাস — ৳৯৯</option><option value=\"365\">১ বছর — ৳১৯৯</option></select><button type=\"button\" id=\"payCreate\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid var(--flag-green);background:var(--flag-green);color:#fff;font-weight:700;cursor:pointer;\">অর্ডার করুন</button></div>" +
+          "<div id=\"payBox\" style=\"display:none;margin-top:10px;\"><div id=\"payInfo\"></div><div style=\"margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;\"><input id=\"payTrxid\" type=\"text\" placeholder=\"TrxID (যেমন 9KH7ABC123)\" style=\"flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:inherit;text-transform:uppercase;\"><button type=\"button\" id=\"paySubmit\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid #d9a400;background:#d9a400;color:#111;font-weight:700;cursor:pointer;\">যাচাই করুন</button></div><div id=\"payStatus\" style=\"margin-top:8px;\"></div></div>" +
           "<div style=\"margin-top:8px;\">অ্যাক্টিভেশন কোড থাকলে নিচে বসান — কোড অনুযায়ী ৩০ দিন, ৪ মাস বা ১ বছরের জন্য প্রিমিয়াম সক্রিয় হবে।</div>" +
           "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;\"><input id=\"premiumCode\" type=\"text\" placeholder=\"BNLP-XXXXXX-XXXXXX\" style=\"flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);background:transparent;color:inherit;\"><button type=\"button\" id=\"premiumActivate\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid var(--flag-green);background:var(--flag-green);color:#fff;font-weight:700;cursor:pointer;\">সক্রিয় করুন</button></div>" +
           "<div id=\"premiumStatus\" style=\"margin-top:8px;\"></div>";
@@ -1336,6 +1339,73 @@ footer .app-logo-img{width:2.75rem;height:2.75rem;border-radius:.9rem}
             })
             .catch(function () { st.textContent = "সার্ভারে পৌঁছানো যাচ্ছে না — একটু পরে আবার চেষ্টা করুন।"; });
         });
+        /* ---- অটো-কেনা: অর্ডার → TrxID → কোড ---- */
+        var payOrder = null, payTimer = null;
+        function bnNum(x) { return String(x).replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[+d]; }); }
+        var payStatusEl = panel.querySelector("#payStatus");
+        function payShowCode(code) {
+          payStatusEl.innerHTML = "✅ পেমেন্ট যাচাই হয়েছে! আপনার কোড: <b style=\"font-size:1.15em;letter-spacing:.5px;\">" + code + "</b><br>কোডটি নিচের ঘরে বসিয়ে দেওয়া হয়েছে — “সক্রিয় করুন” চাপলেই প্রিমিয়াম চালু।";
+          panel.querySelector("#premiumCode").value = code;
+        }
+        function payPoll() {
+          if (!payOrder) return;
+          fetch("/api/pay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "status", order: payOrder }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (d && d.status === "paid" && d.code) {
+                if (payTimer) { clearInterval(payTimer); payTimer = null; }
+                payShowCode(d.code);
+              } else if (d && d.status === "expired") {
+                if (payTimer) { clearInterval(payTimer); payTimer = null; }
+                payStatusEl.textContent = "⌛ এই অর্ডারের সময় শেষ — নতুন করে অর্ডার করুন।";
+              }
+            }).catch(function () {});
+        }
+        panel.querySelector("#payCreate").addEventListener("click", function () {
+          var plan = panel.querySelector("#payPlan").value;
+          panel.querySelector("#payBox").style.display = "block";
+          payStatusEl.textContent = "অর্ডার তৈরি হচ্ছে…";
+          fetch("/api/pay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "create", plan: plan }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d || !d.ok) { payStatusEl.textContent = "অর্ডার তৈরি হয়নি — একটু পরে আবার চেষ্টা করুন।"; return; }
+              payOrder = d.order;
+              try { localStorage.setItem("banglan_order", payOrder); } catch (e) {}
+              panel.querySelector("#payInfo").innerHTML = "অর্ডার নম্বর: <b>" + d.order + "</b><br>বিকাশ / নগদ / রকেটে <b>" + d.number + "</b> নম্বরে <b>৳" + bnNum(d.price) + "</b> পাঠান (Send Money), তারপর নিচে TrxID লিখুন।";
+              payStatusEl.textContent = "";
+            })
+            .catch(function () { payStatusEl.textContent = "সার্ভারে পৌঁছানো যাচ্ছে না — একটু পরে আবার চেষ্টা করুন।"; });
+        });
+        panel.querySelector("#paySubmit").addEventListener("click", function () {
+          var trx = panel.querySelector("#payTrxid").value.trim();
+          if (!payOrder) { payStatusEl.textContent = "আগে “অর্ডার করুন” চাপুন।"; return; }
+          if (!trx) { payStatusEl.textContent = "আগে TrxID লিখুন।"; return; }
+          payStatusEl.textContent = "যাচাই হচ্ছে…";
+          fetch("/api/pay", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "submit", order: payOrder, trxid: trx }) })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+              if (!d || !d.ok) { payStatusEl.textContent = "যাচাই হয়নি — TrxID ঠিক লিখে আবার চেষ্টা করুন।"; return; }
+              if (d.status === "paid" && d.code) { payShowCode(d.code); }
+              else if (d.status === "amount_mismatch") { payStatusEl.textContent = "⚠️ এই TrxID-তে পাঠানো অঙ্ক প্ল্যানের দামের সঙ্গে মেলেনি। ঠিক অঙ্ক পাঠিয়ে আবার চেষ্টা করুন — সমস্যা থাকলে WhatsApp করুন।"; }
+              else if (d.status === "trxid_used") { payStatusEl.textContent = "⚠️ এই TrxID আগেই ব্যবহার হয়ে গেছে।"; }
+              else {
+                payStatusEl.textContent = "⏳ TrxID পাওয়া গেছে — পেমেন্টের SMS পৌঁছালেই যাচাই হয়ে যাবে। প্যানেল খোলা রাখুন, অটো-চেক চলছে…";
+                if (payTimer) clearInterval(payTimer);
+                payTimer = setInterval(payPoll, 5000);
+                setTimeout(function () { if (payTimer) { clearInterval(payTimer); payTimer = null; } }, 180000);
+              }
+            })
+            .catch(function () { payStatusEl.textContent = "সার্ভারে পৌঁছানো যাচ্ছে না — একটু পরে আবার চেষ্টা করুন।"; });
+        });
+        try {
+          var savedOrder = localStorage.getItem("banglan_order");
+          if (savedOrder) {
+            payOrder = savedOrder;
+            panel.querySelector("#payBox").style.display = "block";
+            panel.querySelector("#payInfo").innerHTML = "আগের অর্ডার: <b>" + savedOrder + "</b> — টাকা পাঠিয়ে থাকলে TrxID লিখে যাচাই করুন।";
+            payPoll();
+          }
+        } catch (e) {}
         btnReview.addEventListener("click", function () {
           if (!aiEnabled()) { rbox.style.display = "block"; rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — AI পরামর্শ বন্ধ করা আছে। চালু করতে ওপরের “AI পরামর্শ” টগলটি অন করুন।"; return; }
           var text = inputEl.value || "";
