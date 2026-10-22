@@ -2013,7 +2013,7 @@
         }
       }
       function maybeAskAI(text, tokens) {
-        if (aiDisabled || aiCallCount >= 10 || !text || text.length > 4000) return;
+        if (aiDisabled || aiCallCount >= (premiumActive() ? 60 : 10) || !text || text.length > 4000) return;
         var doubts = [], seenD = {};
         errors.forEach(function (e) {
           if (e.kind === "spell" && !FIX[e.clean] && !seenD[e.clean]) { seenD[e.clean] = 1; doubts.push({ type: "unknown", word: e.clean }); }
@@ -2056,6 +2056,102 @@
           })
           .catch(function () { /* নীরব: ইঞ্জিনের ফলই যথেষ্ট */ });
       }
+      /* ================= প্রিমিয়াম: অ্যাক্টিভেশন + পুরো লেখা AI রিভিউ ================= */
+      function premiumToken() { try { return localStorage.getItem("banglan_premium") || ""; } catch (e) { return ""; } }
+      function premiumActive() {
+        var t = premiumToken(); if (!t) return false;
+        try {
+          var p = JSON.parse(decodeURIComponent(escape(atob(t.split(".")[0].replace(/-/g, "+").replace(/_/g, "/")))));
+          return p.exp > Math.floor(Date.now() / 1000);
+        } catch (e) { return false; }
+      }
+      function escH(x) { return String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+      var premBuilt = false;
+      function premiumUI() {
+        if (premBuilt) return; premBuilt = true;
+        var row = fixAllBtn && fixAllBtn.parentNode;
+        if (!row || !errListEl || !errListEl.parentNode) return;
+        var btnStyle = "margin:6px 6px 0 0;padding:10px 16px;border-radius:12px;border:1.5px solid #d9a400;background:rgba(217,164,0,.10);font-weight:700;cursor:pointer;";
+        var btnPrem = document.createElement("button");
+        btnPrem.type = "button"; btnPrem.id = "premiumBtn"; btnPrem.setAttribute("style", btnStyle);
+        var btnReview = document.createElement("button");
+        btnReview.type = "button"; btnReview.id = "aiReviewBtn"; btnReview.setAttribute("style", btnStyle);
+        btnReview.textContent = "🤖 পুরো লেখা AI রিভিউ";
+        row.appendChild(btnPrem); row.appendChild(btnReview);
+        var panel = document.createElement("div");
+        panel.id = "premiumPanel";
+        panel.setAttribute("style", "display:none;margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
+        panel.innerHTML = "<strong>✨ বাংলান প্রিমিয়াম</strong><div style=\"margin-top:6px;\">প্রিমিয়ামে যা পাবেন: <b>পুরো লেখা AI রিভিউ</b> (এক ক্লিকে পুরো লেখার AI প্রুফরিডিং) + <b>বেশি AI কল</b> (অনিশ্চিত জায়গায় AI পরামর্শের সীমা অনেক বেশি)।</div>" +
+          "<div style=\"margin-top:8px;\">অ্যাক্টিভেশন কোড থাকলে নিচে বসান — কোড ৩০ দিনের জন্য প্রিমিয়াম সক্রিয় করবে।</div>" +
+          "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;\"><input id=\"premiumCode\" type=\"text\" placeholder=\"BNLP-XXXXXX-XXXXXX\" style=\"flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1.5px solid #d9a400;background:transparent;color:inherit;\"><button type=\"button\" id=\"premiumActivate\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid #d9a400;background:rgba(217,164,0,.16);font-weight:700;cursor:pointer;\">সক্রিয় করুন</button></div>" +
+          "<div id=\"premiumStatus\" style=\"margin-top:8px;\"></div>";
+        errListEl.parentNode.insertBefore(panel, errListEl.nextSibling);
+        var rbox = document.createElement("div");
+        rbox.id = "reviewBox";
+        rbox.setAttribute("style", "display:none;margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
+        errListEl.parentNode.insertBefore(rbox, panel.nextSibling);
+        function refreshPrem() {
+          var act = premiumActive();
+          btnPrem.textContent = act ? "✨ প্রিমিয়াম সক্রিয় আছে" : "✨ প্রিমিয়াম";
+          btnReview.style.display = act ? "" : "none";
+        }
+        refreshPrem();
+        btnPrem.addEventListener("click", function () {
+          panel.style.display = panel.style.display === "none" ? "block" : "none";
+        });
+        panel.querySelector("#premiumActivate").addEventListener("click", function () {
+          var code = panel.querySelector("#premiumCode").value.trim();
+          var st = panel.querySelector("#premiumStatus");
+          if (!code) { st.textContent = "আগে কোডটি লিখুন।"; return; }
+          st.textContent = "যাচাই হচ্ছে…";
+          fetch("/api/activate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code }) })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data && data.ok && data.token) {
+                try { localStorage.setItem("banglan_premium", data.token); } catch (e) {}
+                st.textContent = "✅ প্রিমিয়াম সক্রিয় হয়েছে — ৩০ দিনের জন্য। এখন “পুরো লেখা AI রিভিউ” বোতামটি ব্যবহার করতে পারবেন।";
+                refreshPrem();
+              } else if (data && data.configured === false) {
+                st.textContent = "প্রিমিয়াম ব্যবস্থা এখনো চালু হয়নি — শীঘ্রই আসছে।";
+              } else {
+                st.textContent = "❌ কোডটি মেলেনি — ঠিকভাবে লিখে আবার চেষ্টা করুন।";
+              }
+            })
+            .catch(function () { st.textContent = "সার্ভারে পৌঁছানো যাচ্ছে না — একটু পরে আবার চেষ্টা করুন।"; });
+        });
+        btnReview.addEventListener("click", function () {
+          var text = inputEl.value || "";
+          if (!text.trim()) { rbox.style.display = "block"; rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — আগে লেখা লিখুন।"; return; }
+          rbox.style.display = "block";
+          rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — পুরো লেখা পড়া হচ্ছে, একটু অপেক্ষা করুন…";
+          fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "review", text: text.slice(0, 4000), token: premiumToken() }) })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+              if (data && data.premium_required) {
+                try { localStorage.removeItem("banglan_premium"); } catch (e) {}
+                refreshPrem();
+                panel.style.display = "block";
+                rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — প্রিমিয়াম মেয়াদ শেষ বা টোকেন অবৈধ। নিচে আবার কোড সক্রিয় করুন।";
+                return;
+              }
+              if (!data || !data.ok) { rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — AI সার্ভার এখন সাড়া দিচ্ছে না, একটু পরে আবার চেষ্টা করুন।"; return; }
+              var h = "<strong>🤖 AI রিভিউ</strong> <span style=\"opacity:.75\">(পরামর্শ মাত্র — যাচাইকৃত নিয়ম নয়)</span>";
+              if (data.corrected) h += "<div style=\"margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(0,106,78,.10);white-space:pre-wrap;\">" + escH(data.corrected) + "</div>";
+              if (data.changes && data.changes.length) {
+                h += data.changes.map(function (c) {
+                  return "<div style=\"margin-top:8px;\"><span style=\"color:#b00020;font-weight:700;\">" + escH(c.wrong) + "</span> → <span style=\"color:#006a4e;font-weight:700;\">" + escH(c.right) + "</span><div style=\"opacity:.8;font-size:.92em;\">" + escH(c.reason) + "</div></div>";
+                }).join("");
+              } else {
+                h += "<div style=\"margin-top:8px;\">AI কোনো ভুল পায়নি — লেখাটি ঠিক আছে।</div>";
+              }
+              rbox.innerHTML = h;
+            })
+            .catch(function () { rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — সার্ভারে পৌঁছানো যাচ্ছে না।"; });
+        });
+      }
+      if (document.readyState === "complete" || document.readyState === "interactive") premiumUI();
+      else document.addEventListener("DOMContentLoaded", premiumUI);
+
       function render(text, tokens) {
         /* highlighted text */
         if (!tokens) tokens = tokenise(text);
