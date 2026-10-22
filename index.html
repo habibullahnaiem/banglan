@@ -2068,7 +2068,8 @@
         var lab = document.createElement("label");
         lab.className = "ai-toggle";
         lab.innerHTML = "<input type=\"checkbox\" id=\"aiToggle\"" + (aiEnabled() ? " checked" : "") + "><span class=\"track\"></span><span>AI পরামর্শ</span>";
-        row.appendChild(lab);
+        var sampleB = document.getElementById("sampleBtn");
+        if (row && sampleB && sampleB.parentElement === row) row.insertBefore(lab, sampleB); else row.appendChild(lab);
         lab.querySelector("#aiToggle").addEventListener("change", function (ev) {
           try { localStorage.setItem("banglan_ai_off", ev.target.checked ? "0" : "1"); } catch (e) {}
         });
@@ -2095,13 +2096,14 @@
         var btnReview = document.createElement("button");
         btnReview.type = "button"; btnReview.id = "aiReviewBtn"; btnReview.setAttribute("style", btnStyle);
         btnReview.textContent = "🤖 পুরো লেখা AI রিভিউ";
-        buildAiToggle(row);
+        var cbRow = document.getElementById("checkBtn");
+        buildAiToggle(cbRow ? cbRow.parentElement : row);
         row.appendChild(btnPrem); row.appendChild(btnReview);
         var panel = document.createElement("div");
         panel.id = "premiumPanel";
         panel.setAttribute("style", "display:none;margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
         panel.innerHTML = "<strong>✨ বাংলান প্রিমিয়াম</strong><div style=\"margin-top:6px;\"><b>🆓 ফ্রি:</b> বানান-ব্যাকরণ চেকার, অভিধান ও নিয়মের তালিকা, AI পরামর্শ (অনিশ্চিত জায়গায়, সেশনে ১০ বার)।</div><div style=\"margin-top:4px;\"><b>✨ প্রিমিয়াম:</b> ফ্রির সবকিছু + <b>পুরো লেখা AI রিভিউ</b> (এক ক্লিকে পুরো লেখার AI প্রুফরিডিং) + AI পরামর্শ সেশনে <b>৬০ বার</b> পর্যন্ত।</div>" +
-          "<div style=\"margin-top:8px;font-size:1.05em;\"><b>দাম: ৳৩০-তে ৩০ দিন</b> <span style=\"opacity:.75\">(নিয়মিত ৳৫০ — এখন ৪০% ছাড়)</span><br><b>৪ মাসের প্ল্যান: ৳৯৯</b> <span style=\"opacity:.75\">(নিয়মিত ৳২০০ — ৫০% ছাড়)</span><br><b>১ বছরের প্ল্যান: মাত্র ৳১৯৯</b> <span style=\"opacity:.75\">(নিয়মিত ৳৬০০ — ৬৭% ছাড়, সেরা অফার)</span></div>" +
+          "<div style=\"margin-top:8px;font-size:1.05em;\">৩০ দিন: <s>৳৫০</s> <b>৳৩০</b> <span style=\"opacity:.75\">(৪০% ছাড়)</span><br>৪ মাস: <s>৳২০০</s> <b>৳৯৯</b> <span style=\"opacity:.75\">(৫০% ছাড়)</span><br>১ বছর: <s>৳৬০০</s> <b>৳১৯৯</b> <span style=\"opacity:.75\">(৬৭% ছাড় — সেরা অফার)</span></div>" +
           "<div style=\"margin-top:8px;\">অ্যাক্টিভেশন কোড থাকলে নিচে বসান — কোড ৩০ দিনের জন্য প্রিমিয়াম সক্রিয় করবে।</div>" +
           "<div style=\"margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;\"><input id=\"premiumCode\" type=\"text\" placeholder=\"BNLP-XXXXXX-XXXXXX\" style=\"flex:1;min-width:200px;padding:10px 12px;border-radius:10px;border:1.5px solid #d9a400;background:transparent;color:inherit;\"><button type=\"button\" id=\"premiumActivate\" style=\"padding:10px 16px;border-radius:10px;border:1.5px solid #d9a400;background:rgba(217,164,0,.16);font-weight:700;cursor:pointer;\">সক্রিয় করুন</button></div>" +
           "<div id=\"premiumStatus\" style=\"margin-top:8px;\"></div>";
