@@ -123,6 +123,16 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, status: "waiting_sms" });
     }
 
+    if (action === "smslog") {
+      var s2 = process.env.SMS_WEBHOOK_SECRET || "";
+      var g2 = String(req.headers["x-sms-secret"] || body.secret || "");
+      if (!s2 || g2.length !== s2.length || !crypto.timingSafeEqual(Buffer.from(g2), Buffer.from(s2))) {
+        return res.status(403).json({ ok: false, error: "forbidden" });
+      }
+      var last = await kvGet("bnlp:lastsms");
+      return res.status(200).json({ ok: true, lastSms: last });
+    }
+
     if (action === "sms") {
       var secret = process.env.SMS_WEBHOOK_SECRET || "";
       var given = String(req.headers["x-sms-secret"] || body.secret || "");
@@ -130,6 +140,7 @@ module.exports = async function handler(req, res) {
         return res.status(403).json({ ok: false, error: "forbidden" });
       }
       var parsed = parseSms(body.text || body.message || "");
+      try { await kvSet("bnlp:lastsms", { at: Date.now(), sender: String(body.sender || body.from || ""), parsed: !!parsed, trxid: parsed ? parsed.trxid : null, amount: parsed ? parsed.amount : null }); } catch (e) {}
       if (!parsed) return res.status(200).json({ ok: false, error: "unparsed" });
       var sender = String(body.sender || body.from || "").slice(0, 40);
       var key = "bnlp:sms:" + parsed.trxid;
