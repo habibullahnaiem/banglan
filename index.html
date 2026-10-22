@@ -209,6 +209,13 @@ footer .app-logo-img{width:2.75rem;height:2.75rem;border-radius:.9rem}
 #letterBar button:nth-last-child(2)::after{content:"অঃ";position:absolute;inset:0;display:grid;place-items:center;color:var(--foreground)}
 #letterBar button:nth-last-child(3)::after{content:"অং";position:absolute;inset:0;display:grid;place-items:center;color:var(--foreground)}
 .de-ipa{font-family:'Noto Sans','Hind Siliguri',sans-serif}
+#mistakePreview tr{display:block;padding:.55rem 0;border-bottom:1px dashed var(--border)}
+#mistakePreview tr:last-child{border-bottom:0;padding-bottom:0}
+#mistakePreview td{display:inline;padding:0;border:0;background:none}
+#mistakePreview td.wrong{color:var(--flag-red);font-weight:700}
+#mistakePreview td.right{color:var(--flag-green);font-weight:800}
+#mistakePreview td.right::before{content:"→";margin:0 .4rem;color:var(--muted-foreground);font-weight:400}
+#mistakePreview td:last-child{display:block;margin-top:.15rem;color:var(--muted-foreground);font-size:.92rem;line-height:1.55}
 </style>
   </head>
   <body>
