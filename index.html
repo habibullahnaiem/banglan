@@ -1968,6 +1968,62 @@
         })();
         errors.sort(function (a, b) { return a.start - b.start; });
         render(text, tokens);
+        maybeAskAI(text, tokens);
+      }
+
+      /* ================= AI স্তর: ইঞ্জিন অনিশ্চিত হলেই শুধু ডাকা হয় ================= */
+      var AI_WATCH = { "কি": 1, "কী": 1 };
+      var aiCallCount = 0;
+      var aiDisabled = false;
+      function aiPanel() {
+        var p = document.getElementById("aiPanel");
+        if (!p) {
+          p = document.createElement("div");
+          p.id = "aiPanel";
+          p.setAttribute("style", "margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
+          if (errListEl && errListEl.parentNode) errListEl.parentNode.insertBefore(p, errListEl.nextSibling);
+        }
+        return p;
+      }
+      function maybeAskAI(text, tokens) {
+        var panel = document.getElementById("aiPanel");
+        if (aiDisabled || aiCallCount >= 5 || !text || text.length > 2000) { if (panel) panel.style.display = "none"; return; }
+        var doubts = [], seenD = {};
+        errors.forEach(function (e) {
+          if (e.kind === "spell" && !FIX[e.clean] && !seenD[e.clean]) { seenD[e.clean] = 1; doubts.push({ type: "unknown", word: e.clean }); }
+        });
+        var errClean = {};
+        errors.forEach(function (e) { errClean[e.clean] = 1; });
+        (tokens || []).forEach(function (tok) {
+          if (AI_WATCH[tok.clean] && !errClean[tok.clean] && !seenD[tok.clean]) { seenD[tok.clean] = 1; doubts.push({ type: "context", word: tok.clean }); }
+        });
+        if (!doubts.length) { if (panel) panel.style.display = "none"; return; }
+        panel = aiPanel();
+        panel.style.display = "block";
+        panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — ইঞ্জিন কয়েকটা জায়গায় নিশ্চিত নয়, AI-কে জিজ্ঞেস করা হচ্ছে…";
+        aiCallCount++;
+        var snap = text;
+        fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, doubts: doubts }) })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (inputEl.value !== snap) return;
+            if (!data || data.configured === false) { aiDisabled = true; panel.style.display = "none"; return; }
+            if (!data.ok) { panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — AI সার্ভার এখন সাড়া দিচ্ছে না। ইঞ্জিনের ফল ওপরেই আছে।"; return; }
+            var h = "<strong>🤖 AI পরামর্শ</strong> <span style=\"opacity:.75\">(পরামর্শ মাত্র — যাচাইকৃত নিয়ম নয়)</span>";
+            if (data.corrected) h += "<div style=\"margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(0,106,78,.10);white-space:pre-wrap;\">" + data.corrected.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>";
+            if (data.changes && data.changes.length) {
+              h += data.changes.map(function (c) {
+                return "<div style=\"margin-top:8px;\"><span style=\"color:#b00020;font-weight:700;\">" + String(c.wrong).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span> → <span style=\"color:#006a4e;font-weight:700;\">" + String(c.right).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span><div style=\"opacity:.8;font-size:.92em;\">" + String(c.reason).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div></div>";
+              }).join("");
+            } else {
+              h += "<div style=\"margin-top:8px;\">AI বলছে: অনিশ্চিত জায়গাগুলো ঠিকই আছে — কোনো পরিবর্তন লাগবে না।</div>";
+            }
+            panel.innerHTML = h;
+          })
+          .catch(function () {
+            if (inputEl.value !== snap) return;
+            panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — AI সার্ভারে পৌঁছানো যাচ্ছে না। ইঞ্জিনের ফল ওপরেই আছে।";
+          });
       }
 
       function render(text, tokens) {
