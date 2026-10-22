@@ -2013,6 +2013,7 @@
         }
       }
       function maybeAskAI(text, tokens) {
+        if (!aiEnabled()) return;
         if (aiDisabled || aiCallCount >= (premiumActive() ? 60 : 10) || !text || text.length > 4000) return;
         var doubts = [], seenD = {};
         errors.forEach(function (e) {
@@ -2031,6 +2032,7 @@
           .then(function (data) {
             if (inputEl.value !== snap) return;
             if (!data || data.configured === false) { aiDisabled = true; return; }
+            if (!aiEnabled()) return;
             if (!data.ok || !data.changes || !data.changes.length) return;
             var merged = false;
             data.changes.forEach(function (c) {
@@ -2056,6 +2058,22 @@
           })
           .catch(function () { /* নীরব: ইঞ্জিনের ফলই যথেষ্ট */ });
       }
+      /* ================= AI টগল: ব্যবহারকারী চাইলে AI কল বন্ধ/চালু ================= */
+      function aiEnabled() { try { return localStorage.getItem("banglan_ai_off") !== "1"; } catch (e) { return true; } }
+      function buildAiToggle(row) {
+        if (!row || document.getElementById("aiToggle")) return;
+        var st = document.createElement("style");
+        st.textContent = ".ai-toggle{display:inline-flex;align-items:center;gap:8px;margin:6px 10px 0 0;cursor:pointer;font-weight:600;vertical-align:middle;}.ai-toggle input{display:none;}.ai-toggle .track{width:44px;height:24px;border-radius:999px;background:rgba(127,127,127,.35);position:relative;transition:background .2s;flex:none;}.ai-toggle .track:after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;}.ai-toggle input:checked + .track{background:#d9a400;}.ai-toggle input:checked + .track:after{left:23px;}";
+        document.head.appendChild(st);
+        var lab = document.createElement("label");
+        lab.className = "ai-toggle";
+        lab.innerHTML = "<input type=\"checkbox\" id=\"aiToggle\"" + (aiEnabled() ? " checked" : "") + "><span class=\"track\"></span><span>AI পরামর্শ</span>";
+        row.appendChild(lab);
+        lab.querySelector("#aiToggle").addEventListener("change", function (ev) {
+          try { localStorage.setItem("banglan_ai_off", ev.target.checked ? "0" : "1"); } catch (e) {}
+        });
+      }
+
       /* ================= প্রিমিয়াম: অ্যাক্টিভেশন + পুরো লেখা AI রিভিউ ================= */
       function premiumToken() { try { return localStorage.getItem("banglan_premium") || ""; } catch (e) { return ""; } }
       function premiumActive() {
@@ -2077,6 +2095,7 @@
         var btnReview = document.createElement("button");
         btnReview.type = "button"; btnReview.id = "aiReviewBtn"; btnReview.setAttribute("style", btnStyle);
         btnReview.textContent = "🤖 পুরো লেখা AI রিভিউ";
+        buildAiToggle(row);
         row.appendChild(btnPrem); row.appendChild(btnReview);
         var panel = document.createElement("div");
         panel.id = "premiumPanel";
@@ -2120,6 +2139,7 @@
             .catch(function () { st.textContent = "সার্ভারে পৌঁছানো যাচ্ছে না — একটু পরে আবার চেষ্টা করুন।"; });
         });
         btnReview.addEventListener("click", function () {
+          if (!aiEnabled()) { rbox.style.display = "block"; rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — AI পরামর্শ বন্ধ করা আছে। চালু করতে ওপরের “AI পরামর্শ” টগলটি অন করুন।"; return; }
           var text = inputEl.value || "";
           if (!text.trim()) { rbox.style.display = "block"; rbox.innerHTML = "<strong>🤖 AI রিভিউ</strong> — আগে লেখা লিখুন।"; return; }
           rbox.style.display = "block";
