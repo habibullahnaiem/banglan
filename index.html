@@ -596,6 +596,10 @@
         padding: 3px 14px;
         font-size: 15.5px;
       }
+      .chip.ai-chip {
+        border-color: #d9a400;
+        background: rgba(217, 164, 0, .13);
+      }
       .chip:hover { background: var(--accent-soft); }
       .tag { display: inline-block; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 1px 10px; margin-left: 8px; vertical-align: middle; }
       .tag-err { background: var(--err); color: #fff; }
@@ -1971,23 +1975,27 @@
         maybeAskAI(text, tokens);
       }
 
-      /* ================= AI স্তর: ইঞ্জিন অনিশ্চিত হলেই শুধু ডাকা হয় ================= */
+/* ================= AI স্তর: ইঞ্জিন অনিশ্চিত হলেই ডাকা হয়; পরামর্শ কার্ডের চিপেই বসে ================= */
       var AI_WATCH = { "কি": 1, "কী": 1 };
       var aiCallCount = 0;
       var aiDisabled = false;
-      function aiPanel() {
-        var p = document.getElementById("aiPanel");
-        if (!p) {
-          p = document.createElement("div");
-          p.id = "aiPanel";
-          p.setAttribute("style", "margin-top:14px;padding:14px 16px;border-radius:14px;border:1.5px solid #d9a400;background:rgba(217,164,0,.08);line-height:1.7;");
-          if (errListEl && errListEl.parentNode) errListEl.parentNode.insertBefore(p, errListEl.nextSibling);
+      var aiIdSeq = 900000;
+      function aiNorm(w) { return String(w || "").replace(/\u09AF\u09BC/g, "\u09DF"); }
+      function aiFindStandalone(text, w) {
+        var BN = /[\u0980-\u09FE]/, from = 0;
+        while (true) {
+          var i = text.indexOf(w, from);
+          if (i < 0) return -1;
+          var before = i > 0 ? text.charAt(i - 1) : "";
+          var after = i + w.length < text.length ? text.charAt(i + w.length) : "";
+          var covered = false;
+          for (var k = 0; k < errors.length; k++) { if (i >= errors[k].start && i < errors[k].end) { covered = true; break; } }
+          if (!covered && !BN.test(before) && !BN.test(after)) return i;
+          from = i + 1;
         }
-        return p;
       }
       function maybeAskAI(text, tokens) {
-        var panel = document.getElementById("aiPanel");
-        if (aiDisabled || aiCallCount >= 5 || !text || text.length > 2000) { if (panel) panel.style.display = "none"; return; }
+        if (aiDisabled || aiCallCount >= 5 || !text || text.length > 2000) return;
         var doubts = [], seenD = {};
         errors.forEach(function (e) {
           if (e.kind === "spell" && !FIX[e.clean] && !seenD[e.clean]) { seenD[e.clean] = 1; doubts.push({ type: "unknown", word: e.clean }); }
@@ -1997,35 +2005,39 @@
         (tokens || []).forEach(function (tok) {
           if (AI_WATCH[tok.clean] && !errClean[tok.clean] && !seenD[tok.clean]) { seenD[tok.clean] = 1; doubts.push({ type: "context", word: tok.clean }); }
         });
-        if (!doubts.length) { if (panel) panel.style.display = "none"; return; }
-        panel = aiPanel();
-        panel.style.display = "block";
-        panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — ইঞ্জিন কয়েকটা জায়গায় নিশ্চিত নয়, AI-কে জিজ্ঞেস করা হচ্ছে…";
+        if (!doubts.length) return;
         aiCallCount++;
         var snap = text;
         fetch("/api/ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, doubts: doubts }) })
           .then(function (r) { return r.json(); })
           .then(function (data) {
             if (inputEl.value !== snap) return;
-            if (!data || data.configured === false) { aiDisabled = true; panel.style.display = "none"; return; }
-            if (!data.ok) { panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — AI সার্ভার এখন সাড়া দিচ্ছে না। ইঞ্জিনের ফল ওপরেই আছে।"; return; }
-            var h = "<strong>🤖 AI পরামর্শ</strong> <span style=\"opacity:.75\">(পরামর্শ মাত্র — যাচাইকৃত নিয়ম নয়)</span>";
-            if (data.corrected) h += "<div style=\"margin-top:8px;padding:10px 12px;border-radius:10px;background:rgba(0,106,78,.10);white-space:pre-wrap;\">" + data.corrected.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div>";
-            if (data.changes && data.changes.length) {
-              h += data.changes.map(function (c) {
-                return "<div style=\"margin-top:8px;\"><span style=\"color:#b00020;font-weight:700;\">" + String(c.wrong).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span> → <span style=\"color:#006a4e;font-weight:700;\">" + String(c.right).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</span><div style=\"opacity:.8;font-size:.92em;\">" + String(c.reason).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</div></div>";
-              }).join("");
-            } else {
-              h += "<div style=\"margin-top:8px;\">AI বলছে: অনিশ্চিত জায়গাগুলো ঠিকই আছে — কোনো পরিবর্তন লাগবে না।</div>";
-            }
-            panel.innerHTML = h;
+            if (!data || data.configured === false) { aiDisabled = true; return; }
+            if (!data.ok || !data.changes || !data.changes.length) return;
+            var merged = false;
+            data.changes.forEach(function (c) {
+              if (!c.right || !c.wrong || c.wrong === c.right) return;
+              var target = null;
+              for (var i = 0; i < errors.length; i++) { if (aiNorm(errors[i].clean) === aiNorm(c.wrong)) { target = errors[i]; break; } }
+              if (target) {
+                var rest = target.suggestions.filter(function (s) { return s !== c.right; });
+                target.suggestions = [c.right].concat(rest);
+                target.aiSug = c.right;
+                target.aiReason = c.reason || "";
+                merged = true;
+              } else {
+                var idx = aiFindStandalone(text, c.wrong);
+                if (idx >= 0) {
+                  errors.push({ id: aiIdSeq++, word: c.wrong, clean: c.wrong, start: idx, end: idx + c.wrong.length, suggestions: [c.right], kind: "flag", ruleName: "AI পরামর্শ", explanation: c.reason || "প্রসঙ্গ অনুযায়ী AI এই রূপটি সঠিক মনে করছে।", note: "" });
+                  errors.sort(function (a, b) { return a.start - b.start; });
+                  merged = true;
+                }
+              }
+            });
+            if (merged) render(text, tokens);
           })
-          .catch(function () {
-            if (inputEl.value !== snap) return;
-            panel.innerHTML = "<strong>🤖 AI পরামর্শ</strong> — AI সার্ভারে পৌঁছানো যাচ্ছে না। ইঞ্জিনের ফল ওপরেই আছে।";
-          });
+          .catch(function () { /* নীরব: ইঞ্জিনের ফলই যথেষ্ট */ });
       }
-
       function render(text, tokens) {
         /* highlighted text */
         if (!tokens) tokens = tokenise(text);
@@ -2088,11 +2100,13 @@
             var chips = e.suggestions.length
               ? "<div class=\"sug-label\">প্রস্তাবিত সঠিক শব্দ:</div><div class=\"chips\">" +
                 e.suggestions.map(function (s) {
-                  return "<button type=\"button\" class=\"chip\" data-fix=\"" + e.id + "\" data-word=\"" + esc(s) + "\">" + esc(s) + "</button>";
+                  var isAI = e.aiSug && s === e.aiSug;
+                  return "<button type=\"button\" class=\"" + (isAI ? "chip ai-chip" : "chip") + "\" data-fix=\"" + e.id + "\" data-word=\"" + esc(s) + "\">" + (isAI ? "🤖 " : "") + esc(s) + "</button>";
                 }).join("") + "</div>"
               : "<div class=\"nosug\">" + (known ? "এটি প্রচলিত ভুল বানানের তালিকায় আছে, কিন্তু কাছাকাছি সঠিক শব্দ পাওয়া যায়নি — বানানটি মিলিয়ে দেখুন।" : "অভিধানে কাছাকাছি শব্দ পাওয়া যায়নি — নিজে ঠিক করে আবার যাচাই করুন।") + "</div>";
             var badge = e.kind === "replace" ? "<span class=\"tag tag-gram\">ব্যাকরণ</span>" : "<span class=\"tag tag-err\">বানান</span>";
             var why = e.explanation ? "<div class=\"why\"><b>" + esc(e.ruleName || "") + ":</b> " + esc(e.explanation) + (e.note ? " (" + esc(e.note) + ")" : "") + "</div>" : "";
+            if (e.aiSug && e.aiReason) why += "<div class=\"why\">🤖 <b>AI পরামর্শ:</b> " + esc(e.aiReason) + "</div>";
             return "<div class=\"err-item\" data-id=\"" + e.id + "\">" +
               "<span class=\"word\">" + esc(e.word) + "</span>" + badge + chips + why +
               "<button type=\"button\" class=\"ignore-link\" data-ignore=\"" + e.id + "\">এই শব্দটি উপেক্ষা করুন</button></div>";
