@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     try { body = JSON.parse(body); } catch (e) { body = {}; }
   }
   body = body || {};
-  var text = String(body.text || "").slice(0, 2000);
+  var text = String(body.text || "").slice(0, 4000);
   var doubts = Array.isArray(body.doubts) ? body.doubts.slice(0, 12) : [];
   if (!text || !doubts.length) return res.status(200).json({ ok: false });
 
