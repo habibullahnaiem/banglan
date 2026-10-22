@@ -103,8 +103,8 @@ btn.addEventListener('click', function () {
   btn.disabled = true;
   outCard.classList.add('hidden');
   statusEl.textContent = 'AI ভাবছে… ফ্রি মডেলে একটু সময় লাগতে পারে (১০–৩০ সেকেন্ড)।';
-  var prompt = 'তুমি বাংলা বানান ও ব্যাকরণের বিশেষজ্ঞ। নিচের বাংলা লেখাটির সব বানান ও ব্যাকরণের ভুল ঠিক করো। প্রসঙ্গ অনুযায়ী সঠিক শব্দ বেছে নাও (যেমন গানের লাইনে "সুনার" লেখা থাকলে তা হবে "সোনার")। উত্তরে শুধু নিচের ফরম্যাটে লেখো, অন্য কিছু লিখবে না:\n\nশুদ্ধ লেখা:\n<পুরো শুদ্ধ লেখাটা এখানে>\n\nপরিবর্তনসমূহ:\n- ভুল শব্দ → শুদ্ধ শব্দ : সংক্ষেপে কারণ\n(প্রতিটি পরিবর্তন এক লাইনে; কোনো ভুল না থাকলে লিখবে "কোনো ভুল পাওয়া যায়নি")\n\nলেখা:\n' + text;
-  fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt))
+  var prompt = 'তুমি বাংলা বানান ও ব্যাকরণের বিশেষজ্ঞ। নিচের লেখাটির শুধু স্পষ্ট বানান ও ব্যাকরণের ভুল ঠিক করো। প্রসঙ্গ অনুযায়ী সঠিক শব্দ বেছে নাও (গানের লাইনে "সুনার" থাকলে হবে "সোনার")। গান/কবিতার প্রচলিত রূপ (যেমন "তোমায়") বদলাবে না। কোনো ভাবনা বা আলোচনা লিখবে না — শুধু এই ফরম্যাটে উত্তর দাও:\n\nশুদ্ধ লেখা:\n<শুদ্ধ লেখা>\n\nপরিবর্তনসমূহ:\n- ভুল → শুদ্ধ : সংক্ষিপ্ত কারণ\n(কোনো ভুল না থাকলে পরিবর্তনসমূহে লিখবে "কোনো ভুল পাওয়া যায়নি")\n\nলেখা:\n' + text;
+  fetch('https://text.pollinations.ai/' + encodeURIComponent(prompt) + '?model=openai')
     .then(function (r) { if (!r.ok) throw new Error('bad'); return r.text(); })
     .then(function (t) {
       btn.disabled = false;
@@ -120,11 +120,18 @@ btn.addEventListener('click', function () {
 function esc(x) { return x.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 function render(t) {
+  /* ফ্রি মডেল মাঝে মাঝে আক্ষরিক \n আর বাড়তি ভাবনা পাঠায় — পরিষ্কার করে আসল অংশটুকু নেওয়া */
+  t = t.replace(/\\n/g, '\n').replace(/\\"/g, '"');
+  var li = t.lastIndexOf('শুদ্ধ লেখা:');
+  if (li > 0) t = t.slice(li);
   var corr = '', issuesPart = '';
   var m = t.match(/শুদ্ধ লেখা:\s*([\s\S]*?)(?:পরিবর্তনসমূহ:|$)/);
   if (m) corr = m[1].trim();
   var m2 = t.match(/পরিবর্তনসমূহ:\s*([\s\S]*)$/);
   if (m2) issuesPart = m2[1].trim();
+  issuesPart = issuesPart.split('\n').filter(function (ln) {
+    return ln.indexOf('→') !== -1 || /কোনো ভুল পাওয়া যায়নি/.test(ln);
+  }).join('\n');
   outCard.classList.remove('hidden');
   if (!corr && !issuesPart) {
     correctedEl.innerHTML = '<span class="raw">' + esc(t) + '</span>';
