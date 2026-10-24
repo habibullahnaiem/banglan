@@ -146,6 +146,8 @@ mark.pro { text-decoration: underline dashed var(--err-common); text-underline-o
 .de-meta, .de-elabel, .de-mlabel { font-size: 13px; font-weight: 700; letter-spacing: .02em; color: var(--flag-green); text-transform: uppercase; margin-top: 14px; }
 .de-ety, .de-uts { font-size: 15.5px; color: var(--muted-foreground); line-height: 1.7; }
 .de-source { margin-top: 14px; font-size: 14px; color: var(--muted-foreground); border-top: 1px dashed var(--border); padding-top: 10px; }
+.de-vibhakti { margin-bottom: 14px; font-size: 15.5px; line-height: 1.7; background: color-mix(in oklab, var(--flag-green) 10%, transparent); border: 1.5px solid var(--flag-green); border-radius: .9rem; padding: 10px 14px; }
+.de-vibhakti .word-link { background: none; border: 0; color: var(--primary); font-weight: 700; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
 .de-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 16px; }
 .de-nav .word-link { background: none; border: 0; color: var(--primary); font-weight: 700; cursor: pointer; font: inherit; padding: 0; }
 .ipa-copy { background: none; border: 0; cursor: pointer; color: var(--muted-foreground); font-size: 13px; text-decoration: underline; font-family: inherit; }
@@ -1791,18 +1793,98 @@ footer .app-logo-img{width:2.75rem;height:2.75rem;border-radius:.9rem}
         }
         dictResult.innerHTML = head + chipHtml;
       }
+      /* বিভক্তি-বিশ্লেষণ (কারক-বিভক্তি অ্যালগরিদমের লুকআপ-রূপ):
+         হুবহু এন্ট্রি না মিললে বিভক্তি ছাঁড়িয়ে মূল শব্দের এন্ট্রি দেখানো হয়
+         (সোনার = সোনা + র)। গ্রহণ-শর্ত: ছাঁটা stem-এর নিজের এন্ট্রি থাকতেই হবে —
+         অনুমানে কোনো বিশ্লেষণ দেখানো হয় না। */
+      var VIBHAKTI_RULES = [
+        ["দেরকে", "কর্ম/সম্প্রদান"], ["গুলোকে", "কর্ম"], ["গুলিকে", "কর্ম"],
+        ["গুলোতে", "অধিকরণ"], ["গুলিতে", "অধিকরণ"],
+        ["গুলোর", "সম্বন্ধ"], ["গুলির", "সম্বন্ধ"], ["দের", "সম্বন্ধ"],
+        ["দিয়ে", "করণ"], ["দ্বারা", "করণ"], ["কর্তৃক", "করণ"],
+        ["থেকে", "অপাদান"], ["হতে", "অপাদান"], ["চেয়ে", "অপাদান"],
+        ["কে", "কর্ম/সম্প্রদান"], ["এর", "সম্বন্ধ"], ["ের", "সম্বন্ধ"],
+        ["তে", "অধিকরণ"], ["ে", "অধিকরণ"], ["র", "সম্বন্ধ"], ["\u09DF", "অধিকরণ"]
+      ];
+      var LOGNOK = ["গুলো", "গুলি", "খানা", "খানি", "জন", "টা", "টি"];
+      function vibhaktiCandidates(word) {
+        var out = [], seen = {};
+        function pushStem(stem, vib, karak) {
+          var variants = [stem];
+          if (/ত$/.test(stem)) variants.push(stem.replace(/ত$/, "ৎ")); /* খণ্ড-ৎ পুনরুদ্ধার: জগতের -> জগৎ */
+          if (/\u09DF$/.test(stem)) {
+            /* যোজক য়: "ের/এর" বিভক্তিতে য়-ছাঁটা রূপই মূল শব্দ (বইয়ের -> বই, মায়ের -> মা) */
+            if (vib === "ের" || vib === "এর") variants.unshift(stem.slice(0, -1));
+            else variants.push(stem.slice(0, -1));
+          }
+          variants.forEach(function (st) {
+            if (!st || st.length < 2) return;
+            var key = st + "|" + vib;
+            if (seen[key]) return;
+            seen[key] = 1;
+            out.push({ stem: st, vib: vib, karak: karak });
+          });
+        }
+        function add(stem, vib, karak) {
+          if (!stem || stem.length < 2) return;
+          pushStem(stem, vib, karak);
+          LOGNOK.forEach(function (lg) {
+            if (stem.length > lg.length && stem.slice(-lg.length) === lg) {
+              pushStem(stem.slice(0, stem.length - lg.length), lg + "+" + vib, karak);
+            }
+          });
+        }
+        VIBHAKTI_RULES.forEach(function (rule) {
+          var suf = rule[0];
+          if (word.length > suf.length && word.slice(-suf.length) === suf) {
+            add(word.slice(0, word.length - suf.length), suf === "ে" ? "এ" : suf, rule[1]);
+          }
+        });
+        LOGNOK.forEach(function (lg) {
+          if (word.length > lg.length && word.slice(-lg.length) === lg) {
+            pushStem(word.slice(0, word.length - lg.length), lg, "লগ্নক");
+          }
+        });
+        return out;
+      }
+      function tryVibhakti(word, origEntries) {
+        var cands = vibhaktiCandidates(word);
+        var i = 0;
+        (function next() {
+          if (i >= cands.length) { dictNotFound(word, origEntries); return; }
+          var c = cands[i++];
+          loadDictChunk(dictChunkHex(c.stem), function (entries) {
+            if (entries) {
+              for (var j = 0; j < entries.length; j++) {
+                if (entries[j].w === c.stem) {
+                  renderDictEntry(entries[j], entries, j);
+                  var art = dictResult.querySelector(".dict-entry");
+                  if (art) {
+                    art.insertAdjacentHTML("afterbegin",
+                      "<div class=\"de-vibhakti\">বিভক্তি-বিশ্লেষণ: <b>“" + esc(word) + "”</b> = " +
+                      "<button type=\"button\" class=\"word-link\" data-word-link=\"" + esc(c.stem) + "\">" + esc(c.stem) + "</button>" +
+                      " + <b>" + esc(c.vib) + "</b> (" + esc(c.karak) + " বিভক্তি) — নিচে মূল শব্দের অর্থ দেওয়া হলো।</div>");
+                  }
+                  return;
+                }
+              }
+            }
+            next();
+          });
+        })();
+      }
       function showDictWord(word) {
         word = canonBn(word);
         dictInput.value = word;
         hideSuggest();
         dictResult.innerHTML = "<p class=\"empty-note\">“" + esc(word) + "” খোঁজা হচ্ছে…</p>";
         loadDictChunk(dictChunkHex(word), function (entries) {
-          if (!entries) { dictNotFound(word, []); return; }
+          if (!entries) { tryVibhakti(word, []); return; }
           var idx = -1;
           for (var i = 0; i < entries.length; i++) {
             if (entries[i].w === word) { idx = i; break; }
           }
-          if (idx === -1) { dictNotFound(word, entries); return; }
+          if (idx === -1) { tryVibhakti(word, entries); return; }
           renderDictEntry(entries[idx], entries, idx);
         });
       }
